@@ -1,7 +1,7 @@
-const roles = [{
-    "admin": {
-        "description": "Acceso total",
-        "permissions": [
+const roles = {
+    admin: {
+        description: "Acceso total",
+        permissions: [
             "routes:*",
             "destinations:create",
             "destinations:edit",
@@ -10,12 +10,12 @@ const roles = [{
             "itineraries:edit:any",
             "itineraries:delete:any",
             "users:manage",
-            "admin:panel"
-        ]
+            "admin:panel",
+        ],
     },
-    "editor": {
-        "description": "Gestión de contenido",
-        "permissions": [
+    editor: {
+        description: "Gestión de contenido",
+        permissions: [
             "routes:home",
             "routes:destinations",
             "routes:planner",
@@ -23,12 +23,12 @@ const roles = [{
             "destinations:create",
             "destinations:edit",
             "itineraries:create",
-            "itineraries:edit:any"
-        ]
+            "itineraries:edit:any",
+        ],
     },
-    "user": {
-        "description": "Viajero estándar",
-        "permissions": [
+    user: {
+        description: "Viajero estándar",
+        permissions: [
             "routes:home",
             "routes:destinations",
             "routes:planner",
@@ -36,8 +36,9 @@ const roles = [{
             "itineraries:create",
             "itineraries:edit:own",
             "itineraries:delete:own",
-            "destinations:view"
-        ]
-    }
-}]
-export default roles
+            "destinations:view",
+        ],
+    },
+};
+
+export default roles;

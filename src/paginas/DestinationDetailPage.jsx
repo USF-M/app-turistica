@@ -1,7 +1,9 @@
 import Badge from "../componentes/ComponentesUI/Badge";
 import Button from "../componentes/ComponentesUI/Button";
 import Card from "../componentes/ComponentesUI/Card";
-
+import AppContext from "../contextos/AppContext";
+import { useContext, useState } from "react";
+const useApp = () => useContext(AppContext);
 const DestinationDetailPage = () => {
     const { state, dispatch } = useApp();
     const dest = state.selectedDestination;
