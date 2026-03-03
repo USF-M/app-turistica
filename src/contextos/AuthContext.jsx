@@ -1,4 +1,4 @@
-import { createContext, useState, useEffect } from "react";
+import { createContext, useEffect, useState } from "react";
 import authService from "../servicios/authService";
 import { hasPermission } from "../helpers/permissions";
 
@@ -13,15 +13,24 @@ export function AuthProvider({ children }) {
     useEffect(() => {
         const loadAuthData = async () => {
             setLoading(true);
-            const [rolesData, usersData, user] = await Promise.all([
-                authService.getRoles(),
-                authService.getUsers(),
-                authService.getCurrentUser(),
-            ]);
-            setRoles(rolesData);
-            setUsers(usersData);
-            setCurrentUser(user);
-            setLoading(false);
+            try {
+                const [rolesData, usersData, user] = await Promise.all([
+                    authService.getRoles(),
+                    authService.getUsers(),
+                    authService.getCurrentUser(),
+                ]);
+
+                setRoles(rolesData || {});
+                setUsers(usersData || []);
+                setCurrentUser(user || usersData?.[0] || null);
+            } catch (error) {
+                console.error("Error cargando datos de auth:", error);
+                setRoles({});
+                setUsers([]);
+                setCurrentUser(null);
+            } finally {
+                setLoading(false);
+            }
         };
 
         loadAuthData();
@@ -30,10 +39,15 @@ export function AuthProvider({ children }) {
     const can = (action) => hasPermission(currentUser?.role, action, roles);
 
     const switchUser = async (userId) => {
-        setLoading(true);
-        const user = await authService.switchCurrentUser(userId);
-        setCurrentUser(user);
-        setLoading(false);
+        const fallback = users.find((user) => user.id === userId) || users[0] || null;
+        setCurrentUser(fallback);
+
+        try {
+            const user = await authService.switchCurrentUser(userId);
+            if (user) setCurrentUser(user);
+        } catch (error) {
+            console.error("Error cambiando usuario:", error);
+        }
     };
 
     return <AuthContext.Provider value={{ currentUser, users, roles, loading, can, switchUser }}>{children}</AuthContext.Provider>;

@@ -9,7 +9,8 @@ import Notification from "./componentes/ComponentesUI/Notification";
 import Navbar from "./componentes/Navbar/Navbar";
 import AppContext from "./contextos/AppContext";
 import ItineraryPage from "./paginas/ItineraryPage";
-
+import useAuth from "./hooks/useAuth";
+import Button from "./componentes/ComponentesUI/Button";
 import { AuthProvider } from "./contextos/AuthContext";
 import ProtectedRoute from "./componentes/auth/ProtectedRoute";
 import AdminPage from "./paginas/AdminPage";
@@ -135,7 +136,8 @@ const VIEW_ACTIONS = {
 // ROUTER / MAIN APP
 // ============================================================
 const ViewRouter = () => {
-  const { state } = useApp();
+  const { state, dispatch } = useApp();
+  const { currentUser } = useAuth();
   const views = {
     home: <HomePage />,
     destinations: <DestinationsPage />,
@@ -147,8 +149,23 @@ const ViewRouter = () => {
   };
 
   const currentView = views[state.currentView] || <HomePage />;
+
   return (
-    <ProtectedRoute action={VIEW_ACTIONS[state.currentView] || "routes:home"}>
+    <ProtectedRoute
+      action={VIEW_ACTIONS[state.currentView] || "routes:home"}
+      fallback={(
+        <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", textAlign: "center", paddingTop: 90 }}>
+          <div>
+            <div style={{ fontSize: 42, marginBottom: 8 }}>🔒</div>
+            <h2 style={{ marginBottom: 8 }}>Acceso denegado</h2>
+            <p style={{ color: "var(--text-muted)", marginBottom: 16 }}>
+              El rol <strong>{currentUser?.role || "sin sesión"}</strong> no puede ver esta vista.
+            </p>
+            <Button onClick={() => dispatch({ type: "SET_VIEW", payload: "home" })}>Ir a Inicio</Button>
+          </div>
+        </div>
+      )}
+    >
       <div style={{ animation: "fadeIn 0.3s ease" }}>{currentView}</div>
     </ProtectedRoute>
   );
