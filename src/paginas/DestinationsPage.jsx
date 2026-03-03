@@ -6,6 +6,7 @@ import Badge from "../componentes/ComponentesUI/Badge";
 import AppContext from "../contextos/AppContext";
 import { useContext, useState } from "react";
 import useDestinations from "../hooks/useDestinations";
+import useAuth from "../hooks/useAuth";
 
 const useApp = () => useContext(AppContext);
 
@@ -13,6 +14,7 @@ const CATEGORIES = ["Todos", "Cultural", "Playa", "Aventura", "Naturaleza", "Luj
 
 const DestinationsPage = () => {
     const { dispatch } = useApp();
+    const { can } = useAuth();
     const [activeCategory, setActiveCategory] = useState("Todos");
     const [search, setSearch] = useState("");
     const filters = { category: activeCategory !== "Todos" ? activeCategory : undefined, search: search || undefined };
@@ -73,6 +75,7 @@ const DestinationsPage = () => {
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                                         <span style={{ fontSize: 20, fontWeight: 700, color: "var(--ocean-800)" }}>Desde <span style={{ color: "var(--coral-500)" }}>${dest.price}</span></span>
                                         <div style={{ display: "flex", gap: 8 }}>
+                                            {can("destinations:edit") && <Button size="sm" variant="secondary">Editar</Button>}
                                             <Button size="sm" variant="ghost" onClick={() => dispatch({ type: "SET_DESTINATION", payload: dest })}>Ver más</Button>
                                             <Button size="sm" variant="accent" onClick={() => dispatch({ type: "SET_VIEW", payload: "planner" })} icon="✨">Planificar</Button>
                                         </div>

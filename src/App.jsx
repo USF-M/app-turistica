@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, createContext, useContext, useReducer } from "react";
+import { useEffect, useContext, useReducer } from "react";
 import Footer from "./componentes/Footer/Footer";
 import HomePage from "./paginas/HomePage";
 import DestinationsPage from "./paginas/DestinationsPage";
@@ -9,6 +9,10 @@ import Notification from "./componentes/ComponentesUI/Notification";
 import Navbar from "./componentes/Navbar/Navbar";
 import AppContext from "./contextos/AppContext";
 import ItineraryPage from "./paginas/ItineraryPage";
+
+import { AuthProvider } from "./contextos/AuthContext";
+import ProtectedRoute from "./componentes/auth/ProtectedRoute";
+import AdminPage from "./paginas/AdminPage";
 // ============================================================
 // DESIGN TOKENS
 // ============================================================
@@ -68,6 +72,7 @@ function appReducer(state, action) {
     case "SET_ERROR": return { ...state, error: action.payload };
     case "SET_NOTIFICATION": return { ...state, notification: action.payload };
     case "SAVE_ITINERARY": return { ...state, savedItineraries: [...state.savedItineraries, action.payload], notification: { type: "success", message: "¡Itinerario guardado exitosamente!" } };
+    case "DELETE_ITINERARY": return { ...state, savedItineraries: state.savedItineraries.filter((trip) => trip.id !== action.payload), notification: { type: "success", message: "Itinerario eliminado." } };
     default: return state;
   }
 }
@@ -117,21 +122,46 @@ const GlobalStyles = () => (
 );
 
 
+const VIEW_ACTIONS = {
+  home: "routes:home",
+  destinations: "routes:destinations",
+  destination: "routes:destinations",
+  planner: "routes:planner",
+  itinerary: "routes:saved",
+  saved: "routes:saved",
+  admin: "admin:panel",
+};
 // ============================================================
 // ROUTER / MAIN APP
 // ============================================================
 const ViewRouter = () => {
   const { state } = useApp();
-  const views = { home: <HomePage />, destinations: <DestinationsPage />, destination: <DestinationDetailPage />, planner: <PlannerPage />, itinerary: <ItineraryPage />, saved: <SavedPage /> };
-  return <div style={{ animation: "fadeIn 0.3s ease" }}>{views[state.currentView] || <HomePage />}</div>;
+  const views = {
+    home: <HomePage />,
+    destinations: <DestinationsPage />,
+    destination: <DestinationDetailPage />,
+    planner: <PlannerPage />,
+    itinerary: <ItineraryPage />,
+    saved: <SavedPage />,
+    admin: <AdminPage />,
+  };
+
+  const currentView = views[state.currentView] || <HomePage />;
+  return (
+    <ProtectedRoute action={VIEW_ACTIONS[state.currentView] || "routes:home"}>
+      <div style={{ animation: "fadeIn 0.3s ease" }}>{currentView}</div>
+    </ProtectedRoute>
+  );
 };
 
 export default function App() {
   return (
-    <AppProvider>
-      <GlobalStyles />
-      <AppWrapper />
-    </AppProvider>
+    <AuthProvider>
+      <AppProvider>
+        <GlobalStyles />
+        <AppWrapper />
+      </AppProvider>
+    </AuthProvider>
   );
 }
 

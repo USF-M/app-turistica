@@ -4,10 +4,13 @@ import Button from "../componentes/ComponentesUI/Button";
 import Spinner from "../componentes/ComponentesUI/Spinner";
 import Card from "../componentes/ComponentesUI/Card";
 import ItineraryService from "../servicios/ItineraryService";
+import useAuth from "../hooks/useAuth";
+
 const useApp = () => useContext(AppContext);
 
 const SavedPage = () => {
     const { state, dispatch } = useApp();
+    const { currentUser, can } = useAuth();
     const [savedFromService, setSaved] = useState([]);
     const [loading, setLoading] = useState(true);
     useEffect(() => {
@@ -15,6 +18,7 @@ const SavedPage = () => {
     }, []);
     const all = [...savedFromService, ...(state.savedItineraries || [])];
     const statusColors = { upcoming: { bg: "#e6f5ec", color: "var(--leaf-500)", label: "Próximo" }, planning: { bg: "#fef3e2", color: "#d97706", label: "Planificando" }, completed: { bg: "var(--sand-100)", color: "var(--text-muted)", label: "Completado" } };
+    const canDelete = (trip) => can("itineraries:delete:any") || (can("itineraries:delete:own") && trip.ownerId === currentUser?.id);
     return (
         <div style={{ paddingTop: 88, minHeight: "100vh" }}>
             <div style={{ background: "linear-gradient(135deg, var(--ocean-900), var(--ocean-700))", padding: "56px 24px 80px" }}>
@@ -41,7 +45,7 @@ const SavedPage = () => {
                             return (
                                 <Card key={trip.id || i} style={{ padding: 0, animation: `fadeUp 0.5s ${i * 0.07}s both` }}>
                                     <div style={{ height: 160, background: "linear-gradient(135deg, var(--ocean-800), var(--ocean-600))", borderRadius: "var(--radius-lg) var(--radius-lg) 0 0", display: "flex", alignItems: "center", justifyContent: "center", position: "relative", overflow: "hidden" }}>
-                                        <div style={{ position: "absolute", top: -30, right: -30, width: 120, height: 120, borderRadius: "50%", background: "rgba(56,178,212,0.15)" }} />
+                                        
                                         <span style={{ fontSize: 52 }}>✈️</span>
                                         <div style={{ position: "absolute", top: 16, right: 16 }}>
                                             <span style={{ background: sc.bg, color: sc.color, padding: "5px 12px", borderRadius: 99, fontSize: 12, fontWeight: 600 }}>{sc.label}</span>
@@ -49,24 +53,10 @@ const SavedPage = () => {
                                     </div>
                                     <div style={{ padding: 24 }}>
                                         <h3 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>{trip.destination}</h3>
-                                        <p style={{ color: "var(--text-muted)", fontSize: 14, marginBottom: 16 }}>📅 {trip.startDate} → {trip.endDate}</p>
-                                        <div style={{ display: "flex", gap: 12, marginBottom: 20 }}>
-                                            <div style={{ flex: 1, background: "var(--sand-50)", borderRadius: 10, padding: "10px 14px", textAlign: "center" }}>
-                                                <div style={{ fontWeight: 700, fontSize: 18 }}>{trip.days}</div>
-                                                <div style={{ color: "var(--text-muted)", fontSize: 12 }}>días</div>
-                                            </div>
-                                            <div style={{ flex: 1, background: "var(--sand-50)", borderRadius: 10, padding: "10px 14px", textAlign: "center" }}>
-                                                <div style={{ fontWeight: 700, fontSize: 18 }}>{trip.travelers || 2}</div>
-                                                <div style={{ color: "var(--text-muted)", fontSize: 12 }}>viajeros</div>
-                                            </div>
-                                            <div style={{ flex: 1, background: "var(--sand-50)", borderRadius: 10, padding: "10px 14px", textAlign: "center" }}>
-                                                <div style={{ fontWeight: 700, fontSize: 18 }}>${trip.budget?.toLocaleString() || "—"}</div>
-                                                <div style={{ color: "var(--text-muted)", fontSize: 12 }}>budget</div>
-                                            </div>
-                                        </div>
+                                        <p style={{ color: "var(--text-muted)", fontSize: 14, marginBottom: 16 }}>📅 {trip.startDate || "Próximamente"} → {trip.endDate || "Por definir"}</p>
                                         <div style={{ display: "flex", gap: 10 }}>
                                             <Button size="sm" style={{ flex: 1, justifyContent: "center" }} onClick={() => { dispatch({ type: "SET_ITINERARY", payload: trip }); dispatch({ type: "SET_VIEW", payload: "itinerary" }); }}>Ver itinerario</Button>
-                                            <Button size="sm" variant="ghost" icon="🗑" />
+                                            <Button size="sm" variant="ghost" icon="🗑" disabled={!canDelete(trip)} onClick={() => dispatch({ type: "DELETE_ITINERARY", payload: trip.id })} />
                                         </div>
                                     </div>
                                 </Card>

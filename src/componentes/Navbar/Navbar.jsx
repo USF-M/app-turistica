@@ -1,20 +1,25 @@
 import AppContext from "../../contextos/AppContext";
 import { useContext, useState, useEffect } from "react";
 import Button from "../ComponentesUI/Button";
+import useAuth from "../../hooks/useAuth";
 const useApp = () => useContext(AppContext);
 
 const NAV_ITEMS = [
-    { id: "home", label: "Inicio", icon: "🏠" },
-    { id: "destinations", label: "Destinos", icon: "🗺️" },
-    { id: "planner", label: "Planificar", icon: "✨" },
-    { id: "saved", label: "Mis Viajes", icon: "📌" },
+    { id: "home", label: "Inicio", icon: "🏠", action: "routes:home" },
+    { id: "destinations", label: "Destinos", icon: "🗺️", action: "routes:destinations" },
+    { id: "planner", label: "Planificar", icon: "✨", action: "routes:planner" },
+    { id: "saved", label: "Mis Viajes", icon: "📌", action: "routes:saved" },
+    { id: "admin", label: "Admin", icon: "🛡️", action: "admin:panel" },
 ];
 
 const Navbar = () => {
     const { state, dispatch } = useApp();
+    const { can, users, currentUser, switchUser } = useAuth();
     const [scrolled, setScrolled] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
     useEffect(() => { const h = () => setScrolled(window.scrollY > 40); window.addEventListener("scroll", h); return () => window.removeEventListener("scroll", h); }, []);
+
+    const visibleItems = NAV_ITEMS.filter((item) => can(item.action));
     const isHome = state.currentView === "home";
     const bg = scrolled || !isHome ? "var(--white)" : "transparent";
     const textColor = scrolled || !isHome ? "var(--text-primary)" : "var(--white)";
@@ -27,20 +32,27 @@ const Navbar = () => {
                         <span style={{ fontFamily: "'Playfair Display', serif", fontSize: 22, fontWeight: 700, color: textColor, letterSpacing: "-0.02em" }}>VoyageAI</span>
                     </button>
                     <div style={{ display: "flex", gap: 4, alignItems: "center" }} className="desktop-nav">
-                        {NAV_ITEMS.map(item => (
+                        {visibleItems.map(item => (
                             <button key={item.id} onClick={() => dispatch({ type: "SET_VIEW", payload: item.id })}
-                                style={{ padding: "8px 16px", borderRadius: 10, background: state.currentView === item.id ? (scrolled || !isHome ? "var(--ocean-800)" : "rgba(255,255,255,0.2)") : "transparent", color: state.currentView === item.id ? (scrolled || !isHome ? "white" : "white") : textColor, fontWeight: 500, fontSize: 14, transition: "var(--transition)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
+                                style={{ padding: "8px 16px", borderRadius: 10, background: state.currentView === item.id ? (scrolled || !isHome ? "var(--ocean-800)" : "rgba(255,255,255,0.2)") : "transparent", color: state.currentView === item.id ? "white" : textColor, fontWeight: 500, fontSize: 14, transition: "var(--transition)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
                                 <span style={{ fontSize: 15 }}>{item.icon}</span>{item.label}
                             </button>
                         ))}
-                        <Button size="sm" onClick={() => dispatch({ type: "SET_VIEW", payload: "planner" })} icon="✨" style={{ marginLeft: 8 }}>Planificar viaje</Button>
+                        {can("itineraries:create") && <Button size="sm" onClick={() => dispatch({ type: "SET_VIEW", payload: "planner" })} icon="✨" style={{ marginLeft: 8 }}>Planificar viaje</Button>}
+                        <select
+                            value={currentUser?.id || ""}
+                            onChange={(event) => switchUser(event.target.value)}
+                            style={{ marginLeft: 8, borderRadius: 8, padding: "6px 10px" }}
+                        >
+                            {users.map((user) => <option key={user.id} value={user.id}>{user.name} ({user.role})</option>)}
+                        </select>
                     </div>
                     <button onClick={() => setMobileOpen(!mobileOpen)} style={{ display: "none", background: "none", border: "none", fontSize: 24, color: textColor, padding: 8 }} className="mobile-menu-btn">{mobileOpen ? "✕" : "☰"}</button>
                 </div>
             </nav>
             {mobileOpen && (
                 <div style={{ position: "fixed", inset: 0, zIndex: 999, background: "var(--ocean-900)", padding: "100px 24px 40px", display: "flex", flexDirection: "column", gap: 8, animation: "fadeIn 0.2s ease" }}>
-                    {NAV_ITEMS.map(item => (
+                    {visibleItems.map(item => (
                         <button key={item.id} onClick={() => { dispatch({ type: "SET_VIEW", payload: item.id }); setMobileOpen(false); }}
                             style={{ padding: "16px 20px", borderRadius: 14, background: state.currentView === item.id ? "rgba(255,255,255,0.1)" : "transparent", color: "var(--white)", fontWeight: 500, fontSize: 18, textAlign: "left", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 12 }}>
                             <span style={{ fontSize: 22 }}>{item.icon}</span>{item.label}

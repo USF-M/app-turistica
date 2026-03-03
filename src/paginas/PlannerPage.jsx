@@ -4,6 +4,8 @@ import LoadingDots from "../componentes/ComponentesUI/LoadingDots";
 import { useState } from "react";
 
 import useItineraryGenerator from "../hooks/useItineraryGenerator";
+import useAuth from "../hooks/useAuth";
+
 const INTEREST_OPTIONS = [
     { id: "cultura", label: "Cultura & Historia", icon: "🏛" },
     { id: "naturaleza", label: "Naturaleza", icon: "🌿" },
@@ -34,11 +36,23 @@ const AIGenerating = () => (
 
 const PlannerPage = () => {
     const { generate, status } = useItineraryGenerator();
+    const { can } = useAuth();
     const [form, setForm] = useState({ destination: "", startDate: "", endDate: "", budget: "", travelers: "2", pace: "moderate", interests: [], accommodation: "hotel" });
     const [step, setStep] = useState(1);
     const setField = (k, v) => setForm(f => ({ ...f, [k]: v }));
     const toggleInterest = (id) => setForm(f => ({ ...f, interests: f.interests.includes(id) ? f.interests.filter(i => i !== id) : [...f.interests, id] }));
     const days = form.startDate && form.endDate ? Math.max(1, Math.ceil((new Date(form.endDate) - new Date(form.startDate)) / 86400000)) : 0;
+    if (!can("itineraries:create")) {
+        return (
+            <div style={{ paddingTop: 110, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <div style={{ textAlign: "center" }}>
+                    <div style={{ fontSize: 50 }}>🔒</div>
+                    <h2>No puedes crear itinerarios</h2>
+                    <p style={{ color: "var(--text-muted)" }}>Tu rol no tiene permiso para esta acción.</p>
+                </div>
+            </div>
+        );
+    }
     const handleSubmit = () => {
         if (!form.destination || !form.startDate || !form.endDate) return;
         generate({ destination: form.destination, days, budget: form.budget, interests: form.interests, travelers: form.travelers });
